@@ -1,22 +1,3 @@
-/**************************************************************************/
-/*!
-    @file     Adafruit_LIS3DH.cpp
-    @author   K. Townsend / Limor Fried (Adafruit Industries)
-    @license  BSD (see license.txt)
-
-    This is a library for the Adafruit LIS3DH Accel breakout board
-    ----> https://www.adafruit.com/products/2809
-
-    Adafruit invests time and resources providing this open source code,
-    please support Adafruit and open-source hardware by purchasing
-    products from Adafruit!
-
-    @section  HISTORY
-
-    v1.0  - First release
-*/
-/**************************************************************************/
-
 #if ARDUINO >= 100
  #include "Arduino.h"
 #else
@@ -27,11 +8,6 @@
 #include <Adafruit_LIS3DH.h>
 
 
-/**************************************************************************/
-/*!
-    @brief  Instantiates a new LIS3DH class in I2C or SPI mode
-*/
-/**************************************************************************/
 
 
 Adafruit_LIS3DH::Adafruit_LIS3DH(int8_t cspin)
@@ -40,17 +16,10 @@ Adafruit_LIS3DH::Adafruit_LIS3DH(int8_t cspin)
 
 
 
-/**************************************************************************/
-/*!
-    @brief  Setups the HW (reads coefficients values, etc.)
-*/
-/**************************************************************************/
 bool Adafruit_LIS3DH::begin(uint8_t i2caddr) {
 
     digitalWrite(_cs, HIGH);
     pinMode(_cs, OUTPUT);
-
-
     // hardware SPI
     SPI.begin();
 
@@ -67,7 +36,7 @@ bool Adafruit_LIS3DH::begin(uint8_t i2caddr) {
   // enable all axes, normal mode
   writeRegister8(LIS3DH_REG_CTRL1, 0x07);
   // 400Hz rate
-  setDataRate(LIS3DH_DATARATE_400_HZ);
+  setDataRate(LIS3DH_DATARATE_LOWPOWER_5KHZ);
 
   // High res & BDU enabled
   writeRegister8(LIS3DH_REG_CTRL4, 0x88);
@@ -79,7 +48,7 @@ bool Adafruit_LIS3DH::begin(uint8_t i2caddr) {
   //writeRegister8(LIS3DH_REG_PL_CFG, 0x40);
 
   // enable adcs
-  writeRegister8(LIS3DH_REG_TEMPCFG, 0x80);
+  //writeRegister8(LIS3DH_REG_TEMPCFG, 0x80);
 
 
   return true;
@@ -98,75 +67,10 @@ void Adafruit_LIS3DH::read(void) {
     z = spixfer(); z |= ((uint16_t)spixfer()) << 8;
 
     digitalWrite(_cs, HIGH);
-    if (_sck == -1)
-      SPI.endTransaction();              // release the SPI bus
-
-}
-
-/**************************************************************************/
-/*!
-    @brief  Read the auxilary ADC
-*/
-/**************************************************************************/
-
-int16_t Adafruit_LIS3DH::readADC(uint8_t adc) {
-  if ((adc < 1) || (adc > 3)) return 0;
-  uint16_t value;
-
-  adc--;
-
-  uint8_t reg = LIS3DH_REG_OUTADC1_L + adc*2;
-
-
-    SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
-    digitalWrite(_cs, LOW);
-    spixfer(reg | 0x80 | 0x40); // read multiple, bit 7&6 high
-
-    value = spixfer(); value |= ((uint16_t)spixfer()) << 8;
-
-    digitalWrite(_cs, HIGH);
     SPI.endTransaction();              // release the SPI bus
 
-
-  return value;
 }
 
-
-/**************************************************************************/
-/*!
-    @brief  Set INT to output for single or double click
-*/
-/**************************************************************************/
-
-void Adafruit_LIS3DH::setClick(uint8_t c, uint8_t clickthresh, uint8_t timelimit, uint8_t timelatency, uint8_t timewindow) {
-  if (!c) {
-    //disable int
-    uint8_t r = readRegister8(LIS3DH_REG_CTRL3);
-    r &= ~(0x80); // turn off I1_CLICK
-    writeRegister8(LIS3DH_REG_CTRL3, r);
-    writeRegister8(LIS3DH_REG_CLICKCFG, 0);
-    return;
-  }
-  // else...
-
-  writeRegister8(LIS3DH_REG_CTRL3, 0x80); // turn on int1 click
-  writeRegister8(LIS3DH_REG_CTRL5, 0x08); // latch interrupt on int1
-
-  if (c == 1)
-    writeRegister8(LIS3DH_REG_CLICKCFG, 0x15); // turn on all axes & singletap
-  if (c == 2)
-    writeRegister8(LIS3DH_REG_CLICKCFG, 0x2A); // turn on all axes & doubletap
-
-
-  writeRegister8(LIS3DH_REG_CLICKTHS, clickthresh); // arbitrary
-  writeRegister8(LIS3DH_REG_TIMELIMIT, timelimit); // arbitrary
-  writeRegister8(LIS3DH_REG_TIMELATENCY, timelatency); // arbitrary
-  writeRegister8(LIS3DH_REG_TIMEWINDOW, timewindow); // arbitrary
-}
-
-uint8_t Adafruit_LIS3DH::getClick(void) {
-  return readRegister8(LIS3DH_REG_CLICKSRC);
-}
 
 
 /**************************************************************************/
@@ -293,27 +197,14 @@ void Adafruit_LIS3DH::writeRegister8(uint8_t reg, uint8_t value) {
 */
 /**************************************************************************/
 uint8_t Adafruit_LIS3DH::readRegister8(uint8_t reg) {
-  uint8_t value;
+    uint8_t value;
 
-  if (_cs == -1) {
-    Wire.beginTransmission(_i2caddr);
-    Wire.write((uint8_t)reg);
-    Wire.endTransmission();
-
-    Wire.requestFrom(_i2caddr, 1);
-    value = Wire.read();
-  }  
-  #ifndef __AVR_ATtiny85__
-  else {
-    if (_sck == -1)
-      SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
+    SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
     digitalWrite(_cs, LOW);
     spixfer(reg | 0x80); // read, bit 7 high
     value = spixfer(0);
     digitalWrite(_cs, HIGH);
-    if (_sck == -1)
-      SPI.endTransaction();              // release the SPI bus
-  }
-  #endif
+    SPI.endTransaction();              // release the SPI bus
+
   return value;
 }
