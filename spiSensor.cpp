@@ -5,18 +5,18 @@
 #endif
 
 #include <Wire.h>
-#include <Adafruit_LIS3DHCopy.h>
+#include <spiSensor.h>
 
 
 
 
-Adafruit_LIS3DH::Adafruit_LIS3DH(int8_t cspin)
+spiSensor::spiSensor(int8_t cspin)
   : _cs(cspin), _mosi(-1), _miso(-1), _sck(-1), _sensorID(-1)
 { }
 
 
 
-bool Adafruit_LIS3DH::begin(uint8_t i2caddr) {
+bool spiSensor::begin(uint8_t i2caddr) {
 
     digitalWrite(_cs, HIGH);
     pinMode(_cs, OUTPUT);
@@ -55,7 +55,7 @@ bool Adafruit_LIS3DH::begin(uint8_t i2caddr) {
 }
 
 
-void Adafruit_LIS3DH::read(void) {
+void spiSensor::read(void) {
   // read x y z at once
 
     SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
@@ -78,7 +78,7 @@ void Adafruit_LIS3DH::read(void) {
     @brief  Sets the g range for the accelerometer
 */
 /**************************************************************************/
-void Adafruit_LIS3DH::setRange(lis3dh_range_t range)
+void spiSensor::setRange(lis3dh_range_t range)
 {
   uint8_t r = readRegister8(LIS3DH_REG_CTRL4);
   r &= ~(0x30);
@@ -91,7 +91,7 @@ void Adafruit_LIS3DH::setRange(lis3dh_range_t range)
     @brief  Sets the g range for the accelerometer
 */
 /**************************************************************************/
-lis3dh_range_t Adafruit_LIS3DH::getRange(void)
+lis3dh_range_t spiSensor::getRange(void)
 {
   /* Read the data format register to preserve bits */
   return (lis3dh_range_t)((readRegister8(LIS3DH_REG_CTRL4) >> 4) & 0x03);
@@ -102,7 +102,7 @@ lis3dh_range_t Adafruit_LIS3DH::getRange(void)
     @brief  Sets the data rate for the LIS3DH (controls power consumption)
 */
 /**************************************************************************/
-void Adafruit_LIS3DH::setDataRate(lis3dh_dataRate_t dataRate)
+void spiSensor::setDataRate(lis3dh_dataRate_t dataRate)
 {
   uint8_t ctl1 = readRegister8(LIS3DH_REG_CTRL1);
   ctl1 &= ~(0xF0); // mask off bits
@@ -115,7 +115,7 @@ void Adafruit_LIS3DH::setDataRate(lis3dh_dataRate_t dataRate)
     @brief  Sets the data rate for the LIS3DH (controls power consumption)
 */
 /**************************************************************************/
-lis3dh_dataRate_t Adafruit_LIS3DH::getDataRate(void)
+lis3dh_dataRate_t spiSensor::getDataRate(void)
 {
   return (lis3dh_dataRate_t)((readRegister8(LIS3DH_REG_CTRL1) >> 4)& 0x0F);
 }
@@ -125,7 +125,7 @@ lis3dh_dataRate_t Adafruit_LIS3DH::getDataRate(void)
     @brief  Gets the most recent sensor event
 */
 /**************************************************************************/
-bool Adafruit_LIS3DH::getEvent(sensors_event_t *event) {
+bool spiSensor::getEvent(sensors_event_t *event) {
   /* Clear the event */
   memset(event, 0, sizeof(sensors_event_t));
 
@@ -146,7 +146,7 @@ bool Adafruit_LIS3DH::getEvent(sensors_event_t *event) {
     @brief  Gets the sensor_t data
 */
 /**************************************************************************/
-void Adafruit_LIS3DH::getSensor(sensor_t *sensor) {
+void spiSensor::getSensor(sensor_t *sensor) {
   /* Clear the sensor_t object */
   memset(sensor, 0, sizeof(sensor_t));
 
@@ -169,7 +169,7 @@ void Adafruit_LIS3DH::getSensor(sensor_t *sensor) {
 */
 /**************************************************************************/
 
-uint8_t Adafruit_LIS3DH::spixfer(uint8_t x) {
+uint8_t spiSensor::spixfer(uint8_t x) {
 
     return SPI.transfer(x);
 }
@@ -180,7 +180,7 @@ uint8_t Adafruit_LIS3DH::spixfer(uint8_t x) {
     @brief  Writes 8-bits to the specified destination register
 */
 /**************************************************************************/
-void Adafruit_LIS3DH::writeRegister8(uint8_t reg, uint8_t value) {
+void spiSensor::writeRegister8(uint8_t reg, uint8_t value) {
     
     SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
     digitalWrite(_cs, LOW);
@@ -196,7 +196,7 @@ void Adafruit_LIS3DH::writeRegister8(uint8_t reg, uint8_t value) {
     @brief  Reads 8-bits from the specified register
 */
 /**************************************************************************/
-uint8_t Adafruit_LIS3DH::readRegister8(uint8_t reg) {
+uint8_t spiSensor::readRegister8(uint8_t reg) {
     uint8_t value;
 
     SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
