@@ -68,8 +68,20 @@ void spiSensor::read(void) {
 
     digitalWrite(_cs, HIGH);
     SPI.endTransaction();              // release the SPI bus
+    uint8_t range = getRange();
+    uint16_t divider = 1;
+    if (range == LIS3DH_RANGE_16_G) divider = 1365; // different sensitivity at 16g
+    if (range == LIS3DH_RANGE_8_G) divider = 4096;
+    if (range == LIS3DH_RANGE_4_G) divider = 8190;
+    if (range == LIS3DH_RANGE_2_G) divider = 16380;
+
+    x_g = (float)x / divider;
+    y_g = (float)y / divider;
+    z_g = (float)z / divider;
 
 }
+
+
 
 
 
