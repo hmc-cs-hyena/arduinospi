@@ -282,7 +282,7 @@ typedef enum {
 class accelH3LIS331DL: public Adafruit_Sensor {
  public:
   accelH3LIS331DL(void);
-  accelH3LIS331DL(int8_t cspin););
+  accelH3LIS331DL(int8_t cspin);
   
   bool begin();
 	
