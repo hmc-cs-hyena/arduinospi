@@ -282,14 +282,11 @@ typedef enum {
 class accelH3LIS331DL: public Adafruit_Sensor {
  public:
   accelH3LIS331DL(void);
-  accelH3LIS331DL(int8_t cspin);
-  accelH3LIS331DL(int8_t cspin, int8_t mosipin, int8_t misopin, int8_t sckpin);
+  accelH3LIS331DL(int8_t cspin););
   
-  //bool       begin(uint8_t addr = LIS3DH_DEFAULT_ADDRESS);
   bool begin();
 	
   void read();
-  int16_t readADC(uint8_t a);
 
   void setRange(lis3dh_range_t range);
   lis3dh_range_t getRange(void);
@@ -300,24 +297,19 @@ class accelH3LIS331DL: public Adafruit_Sensor {
   bool getEvent(sensors_event_t *event);
   void getSensor(sensor_t *sensor);
 
-  uint8_t getOrientation(void);
-
-  void setClick(uint8_t c, uint8_t clickthresh, uint8_t timelimit = 10, uint8_t timelatency = 20, uint8_t timewindow = 255);
-  uint8_t getClick(void);
-
-  int16_t x, y, z;
+  int16_t x_raw, y_raw, z_raw;
   float x_g, y_g, z_g;
+  float x, y, z;
 
  private:
   
   uint8_t readRegister8(uint8_t reg);
   void writeRegister8(uint8_t reg, uint8_t value);
   uint8_t spixfer(uint8_t x = 0xFF);
-
+  int16_t _adjVal[3];
 
   int32_t _sensorID;
-  int8_t  _i2caddr;
 
   // SPI
-  int8_t _cs, _mosi, _miso, _sck;
+  int8_t _cs;
 };
