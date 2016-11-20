@@ -53,8 +53,8 @@ void accelH3LIS331DL::read(void) {
     //SPI.transfer((0x24); 
     
     // 0xFF - send nothing
-    x_raw = SPI.transfer(0xFF); x_raw |= ((uint16_tSPI.transfer(0xFF)) << 8;
-    y_raw = SPI.transfer(0xFF); y_raw |= ((uint16_tSPI.transfer(0xFF)) << 8;
+    x_raw = SPI.transfer(0xFF); x_raw |= ((uint16_t)SPI.transfer(0xFF)) << 8;
+    y_raw = SPI.transfer(0xFF); y_raw |= ((uint16_t)SPI.transfer(0xFF)) << 8;
     z_raw = SPI.transfer(0xFF); z_raw |= ((uint16_t)SPI.transfer(0xFF)) << 8;
 
     digitalWrite(_cs, HIGH);
