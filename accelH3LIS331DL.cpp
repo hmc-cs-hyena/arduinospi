@@ -11,11 +11,10 @@
 
 
 accelH3LIS331DL::accelH3LIS331DL(int8_t cspin)
-  : _cs(cspin), _mosi(-1), _miso(-1), _sck(-1), _sensorID(-1)
+  : _cs(cspin)
 { }
 
 
-//bool accelH3LIS331DL::begin(uint8_t i2caddr) {
 bool accelH3LIS331DL::begin(void) {
 
     digitalWrite(_cs, HIGH);
@@ -23,16 +22,6 @@ bool accelH3LIS331DL::begin(void) {
     // hardware SPI
     SPI.begin();
 
-/*
-  // Check connection 
-  uint8_t deviceid = readRegister8(LIS3DH_REG_WHOAMI);
-  if (deviceid != 0x33)
-  {
-    // No LIS3DH detected ... return false 
-    //Serial.println(deviceid, HEX);
-    return false;
-  }
-*/
   // enable all axes, normal mode
   writeRegister8(LIS3DH_REG_CTRL1, 0x07);
   // 400Hz rate
@@ -60,12 +49,13 @@ void accelH3LIS331DL::read(void) {
 
     SPI.beginTransaction(SPISettings(50000000000000000, MSBFIRST, SPI_MODE0));
     digitalWrite(_cs, LOW);
-    spixfer(LIS3DH_REG_OUT_X_L | 0x80 | 0x40); // read multiple, bit 7&6 high
-    //spixfer(0x24); 
-
-    x = spixfer(); x |= ((uint16_t)spixfer()) << 8;
-    y = spixfer(); y |= ((uint16_t)spixfer()) << 8;
-    z = spixfer(); z |= ((uint16_t)spixfer()) << 8;
+    SPI.transfer(LIS3DH_REG_OUT_X_L | 0x80 | 0x40); // read multiple, bit 7&6 high
+    //SPI.transfer((0x24); 
+    
+    // 0xFF - send nothing
+    x_raw = SPI.transfer(0xFF); x_raw |= ((uint16_tSPI.transfer(0xFF)) << 8;
+    y_raw = SPI.transfer(0xFF); y_raw |= ((uint16_tSPI.transfer(0xFF)) << 8;
+    z_raw = SPI.transfer(0xFF); z_raw |= ((uint16_t)SPI.transfer(0xFF)) << 8;
 
     digitalWrite(_cs, HIGH);
     SPI.endTransaction();              // release the SPI bus
@@ -77,9 +67,13 @@ void accelH3LIS331DL::read(void) {
     if (range == LIS3DH_RANGE_4_G) divider = 8190;
     if (range == LIS3DH_RANGE_2_G) divider = 16380;
 
-    x_g = (float)x / divider;
-    y_g = (float)y / divider;
-    z_g = (float)z / divider;
+    x_g = (float)x_raw / divider;
+    y_g = (float)y_raw / divider;
+    z_g = (float)z_raw / divider;
+                                          
+    x = x_g * SENSORS_GRAVITY_STANDARD;
+    y = y_g * SENSORS_GRAVITY_STANDARD;
+    z = z_g * SENSORS_GRAVITY_STANDARD;
 
 }
 
@@ -179,18 +173,6 @@ void accelH3LIS331DL::getSensor(sensor_t *sensor) {
 
 /**************************************************************************/
 /*!
-    @brief  Low level SPI
-*/
-/**************************************************************************/
-
-uint8_t accelH3LIS331DL::spixfer(uint8_t x) {
-
-    return SPI.transfer(x);
-}
-
-
-/**************************************************************************/
-/*!
     @brief  Writes 8-bits to the specified destination register
 */
 /**************************************************************************/
@@ -198,8 +180,8 @@ void accelH3LIS331DL::writeRegister8(uint8_t reg, uint8_t value) {
     
     SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
     digitalWrite(_cs, LOW);
-    spixfer(reg & ~0x80); // write, bit 7 low
-    spixfer(value);
+    SPI.transfer(reg & ~0x80); // write, bit 7 low
+    SPI.transfer(value);
     digitalWrite(_cs, HIGH);
     SPI.endTransaction();              // release the SPI bus
 
@@ -215,8 +197,8 @@ uint8_t accelH3LIS331DL::readRegister8(uint8_t reg) {
 
     SPI.beginTransaction(SPISettings(500000, MSBFIRST, SPI_MODE0));
     digitalWrite(_cs, LOW);
-    spixfer(reg | 0x80); // read, bit 7 high
-    value = spixfer(0);
+    SPI.transfer(reg | 0x80); // read, bit 7 high
+    value = SPI.transfer(0);
     digitalWrite(_cs, HIGH);
     SPI.endTransaction();              // release the SPI bus
 
