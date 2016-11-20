@@ -23,22 +23,23 @@ bool accelH3LIS331DL::begin(void) {
     SPI.begin();
 
   // enable all axes, normal mode
-  writeRegister8(LIS3DH_REG_CTRL1, 0x07);
+  writeRegister8(H3LIS331DL_CTRL_REG1, 0x07);
   // 400Hz rate
-  setDataRate(LIS3DH_DATARATE_400_HZ);
+  setDataRate(H3LIS331DL_ODR_1000Hz);
 
   // High res & BDU enabled
-  writeRegister8(LIS3DH_REG_CTRL4, 0x88);
+  //writeRegister8(H3LIS331DL_CTRL_REG4, 0x88);
 
   // DRDY on INT1
-  writeRegister8(LIS3DH_REG_CTRL3, 0x10);
+  //writeRegister8(LIS3DH_REG_CTRL3, 0x10);
 
   // Turn on orientation config
   //writeRegister8(LIS3DH_REG_PL_CFG, 0x40);
 
   // enable adcs
   //writeRegister8(LIS3DH_REG_TEMPCFG, 0x80);
-
+  
+  setRange(H3LIS331DL_FULLSCALE_8);
 
   return true;
 }
@@ -49,7 +50,7 @@ void accelH3LIS331DL::read(void) {
 
     SPI.beginTransaction(SPISettings(50000000000000000, MSBFIRST, SPI_MODE0));
     digitalWrite(_cs, LOW);
-    SPI.transfer(LIS3DH_REG_OUT_X_L | 0x80 | 0x40); // read multiple, bit 7&6 high
+    SPI.transfer(H3LIS331DL_OUT_X_L | 0x80 | 0x40); // read multiple, bit 7&6 high
     //SPI.transfer((0x24); 
     
     // 0xFF - send nothing
@@ -59,6 +60,7 @@ void accelH3LIS331DL::read(void) {
 
     digitalWrite(_cs, HIGH);
     SPI.endTransaction();              // release the SPI bus
+    /*
     uint8_t range = getRange();
     //uint8_t range = LIS3DH_RANGE_16_G;
     uint16_t divider = 1;
@@ -66,14 +68,17 @@ void accelH3LIS331DL::read(void) {
     if (range == LIS3DH_RANGE_8_G) divider = 4096;
     if (range == LIS3DH_RANGE_4_G) divider = 8190;
     if (range == LIS3DH_RANGE_2_G) divider = 16380;
-
+    
     x_g = (float)x_raw / divider;
     y_g = (float)y_raw / divider;
     z_g = (float)z_raw / divider;
-                                          
-    x = x_g * SENSORS_GRAVITY_STANDARD;
-    y = y_g * SENSORS_GRAVITY_STANDARD;
-    z = z_g * SENSORS_GRAVITY_STANDARD;
+    */                                 
+ 
+    double gains = 0.003;
+    
+    x = (x_raw - VAL_X_AXIS) * gains;
+    y = (y_raw - VAL_y_AXIS) * gains;
+    z = (z_raw - VAL_z_AXIS) * gains;
 
 }
 
@@ -86,12 +91,12 @@ void accelH3LIS331DL::read(void) {
     @brief  Sets the g range for the accelerometer
 */
 /**************************************************************************/
-void accelH3LIS331DL::setRange(lis3dh_range_t range)
+void accelH3LIS331DL::setRange(H3LIS331DL_Fullscale_t range)
 {
-  uint8_t r = readRegister8(LIS3DH_REG_CTRL4);
+  uint8_t r = readRegister8(H3LIS331DL_CTRL_REG4);
   r &= ~(0x30);
   r |= range << 4;
-  writeRegister8(LIS3DH_REG_CTRL4, r);
+  writeRegister8(H3LIS331DL_CTRL_REG4, r);
 }
 
 /**************************************************************************/
@@ -99,10 +104,10 @@ void accelH3LIS331DL::setRange(lis3dh_range_t range)
     @brief  Sets the g range for the accelerometer
 */
 /**************************************************************************/
-lis3dh_range_t accelH3LIS331DL::getRange(void)
+H3LIS331DL_Fullscale_t accelH3LIS331DL::getRange(void)
 {
   /* Read the data format register to preserve bits */
-  return (lis3dh_range_t)((readRegister8(LIS3DH_REG_CTRL4) >> 4) & 0x03);
+  return (H3LIS331DL_Fullscale_t)((readRegister8(H3LIS331DL_CTRL_REG4) >> 4) & 0x03);
 }
 
 /**************************************************************************/
@@ -110,12 +115,12 @@ lis3dh_range_t accelH3LIS331DL::getRange(void)
     @brief  Sets the data rate for the LIS3DH (controls power consumption)
 */
 /**************************************************************************/
-void accelH3LIS331DL::setDataRate(lis3dh_dataRate_t dataRate)
+void accelH3LIS331DL::setDataRate(H3LIS331DL_ODR_t dataRate)
 {
-  uint8_t ctl1 = readRegister8(LIS3DH_REG_CTRL1);
+  uint8_t ctl1 = readRegister8(H3LIS331DL_CTRL_REG1);
   ctl1 &= ~(0xF0); // mask off bits
   ctl1 |= (dataRate << 4);
-  writeRegister8(LIS3DH_REG_CTRL1, ctl1);
+  writeRegister8(H3LIS331DL_CTRL_REG1, ctl1);
 }
 
 /**************************************************************************/
@@ -123,9 +128,9 @@ void accelH3LIS331DL::setDataRate(lis3dh_dataRate_t dataRate)
     @brief  Sets the data rate for the LIS3DH (controls power consumption)
 */
 /**************************************************************************/
-lis3dh_dataRate_t accelH3LIS331DL::getDataRate(void)
+H3LIS331DL_ODR_t accelH3LIS331DL::getDataRate(void)
 {
-  return (lis3dh_dataRate_t)((readRegister8(LIS3DH_REG_CTRL1) >> 4)& 0x0F);
+  return (H3LIS331DL_ODR_t)((readRegister8(H3LIS331DL_CTRL_REG1) >> 4)& 0x0F);
 }
 
 /**************************************************************************/
@@ -159,7 +164,7 @@ void accelH3LIS331DL::getSensor(sensor_t *sensor) {
   memset(sensor, 0, sizeof(sensor_t));
 
   /* Insert the sensor name in the fixed length char array */
-  strncpy (sensor->name, "LIS3DH", sizeof(sensor->name) - 1);
+  strncpy (sensor->name, "H3LIS331DL", sizeof(sensor->name) - 1);
   sensor->name[sizeof(sensor->name)- 1] = 0;
   sensor->version     = 1;
   sensor->sensor_id   = _sensorID;
