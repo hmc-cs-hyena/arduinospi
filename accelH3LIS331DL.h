@@ -30,7 +30,13 @@
 #include <Adafruit_Sensor.h>
 
 #ifndef H3LIS331DL_H
-#define H3LIS331DL_H
+  #define H3LIS331DL_H
+#endif
+
+#define VAL_X_AXIS  203
+#define VAL_Y_AXIS  165
+#define VAL_Z_AXIS  371
+
 
 #define MEMS_SET                        0x01
 #define MEMS_RESET                      0x00
